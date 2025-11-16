@@ -1,0 +1,21 @@
+<% layout('layout') %>
+<div class="card">
+  <h3>Prévisualisation du template</h3>
+  <p>
+    <strong>Nom:</strong> <%= template.name %><br/>
+    <strong>Variables:</strong> <%= (template.variables||[]).join(', ') %>
+  </p>
+  <div style="margin:12px 0;">
+    <strong>Objet rendu:</strong>
+    <div style="padding:8px;border:1px solid var(--border-color);background:var(--bg-color);"><%= renderedSubject %></div>
+  </div>
+  <div style="margin:12px 0;">
+    <strong>HTML rendu:</strong>
+    <div style="padding:8px;border:1px solid var(--border-color);background:#fff;">
+      <%- renderedHtml %>
+    </div>
+  </div>
+  <div style="margin-top:12px;">
+    <a class="button secondary" href="/templates">Retour</a>
+  </div>
+</div>

@@ -1,0 +1,27 @@
+<% layout('layout') -%>
+<section>
+  <div class="card">
+    <h3>Inscription</h3>
+    <% if (typeof error !== 'undefined' && error) { %>
+      <div class="alert alert-error"><%= error %></div>
+    <% } %>
+    <form action="/register" method="post" class="form-grid">
+      <div class="form-group">
+        <label for="username">Nom d'utilisateur</label>
+        <input type="text" id="username" name="username" placeholder="ex: johndoe" required />
+      </div>
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" placeholder="ex: john@exemple.com" required />
+      </div>
+      <div class="form-group">
+        <label for="password">Mot de passe</label>
+        <input type="password" id="password" name="password" minlength="6" required />
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary"><i class="fas fa-user-plus"></i> Créer mon compte</button>
+        <a href="/login" class="btn btn-link">J'ai déjà un compte</a>
+      </div>
+    </form>
+  </div>
+</section>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> | Plateforme E-mails</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKx3buserXlW5un1WJkUFRQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="logo">
+                <i class="fas fa-paper-plane"></i> E-mail Pro
+            </div>
+            <nav class="nav-links">
+                <ul>
+                    <li><a href="/" class="<%= (typeof activePage !== 'undefined' && activePage === 'dashboard') ? 'active' : '' %>"><i class="fas fa-tachometer-alt"></i> Tableau de Bord</a></li>
+                    <li><a href="/compose" class="<%= (typeof activePage !== 'undefined' && activePage === 'compose') ? 'active' : '' %>"><i class="fas fa-envelope"></i> Créer & Envoyer</a></li>
+                    <li><a href="/campaigns" class="<%= (typeof activePage !== 'undefined' && activePage === 'campaigns') ? 'active' : '' %>"><i class="fas fa-bullhorn"></i> Campagnes</a></li>
+                    <li><a href="/contacts" class="<%= (typeof activePage !== 'undefined' && activePage === 'contacts') ? 'active' : '' %>"><i class="fas fa-users"></i> Contacts</a></li>
+                    <li><a href="/domains" class="<%= (typeof activePage !== 'undefined' && activePage === 'domains') ? 'active' : '' %>"><i class="fas fa-globe"></i> Domaines</a></li>
+                    <li><a href="/settings" class="<%= (typeof activePage !== 'undefined' && activePage === 'settings') ? 'active' : '' %>"><i class="fas fa-cogs"></i> Paramètres</a></li>
+                    <% if (typeof currentUser !== 'undefined' && currentUser) { %>
+                        <li><a href="/logout"><i class="fas fa-sign-out-alt"></i> Déconnexion</a></li>
+                    <% } else { %>
+                        <li><a href="/login" class="<%= (typeof activePage !== 'undefined' && activePage === 'login') ? 'active' : '' %>"><i class="fas fa-sign-in-alt"></i> Connexion</a></li>
+                        <li><a href="/register" class="<%= (typeof activePage !== 'undefined' && activePage === 'register') ? 'active' : '' %>"><i class="fas fa-user-plus"></i> Inscription</a></li>
+                    <% } %>
+                </ul>
+            </nav>
+        </aside>
+
+        <div class="main-content">
+            <header class="navbar">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <button class="menu-toggle" aria-label="Ouvrir le menu" title="Menu">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h2 style="margin:0;"><%= title %></h2>
+                </div>
+                <div class="user-info">
+                    <span>Bienvenue, <%= (typeof currentUser !== 'undefined' && currentUser) ? currentUser.username : 'Invité' %></span>
+                    <i class="fas fa-user-circle"></i>
+                </div>
+            </header>
+
+            <main class="page-content">
+                <%- body %> <!-- C'est ici que le contenu spécifique de chaque page sera injecté -->
+            </main>
+
+            <div class="sidebar-overlay" aria-hidden="true"></div>
+
+            <footer class="footer">
+                <p>&copy; 2023 Plateforme E-mails Pro. Tous droits réservés.</p>
+            </footer>
+        </div>
+    </div>
+    <script>
+      (function(){
+        const toggle = document.querySelector('.menu-toggle');
+        const overlay = document.querySelector('.sidebar-overlay');
+        const body = document.body;
+        function closeSidebar(){ body.classList.remove('sidebar-open'); }
+        function openSidebar(){ body.classList.add('sidebar-open'); }
+        toggle && toggle.addEventListener('click', function(){
+          if (body.classList.contains('sidebar-open')) closeSidebar(); else openSidebar();
+        });
+        overlay && overlay.addEventListener('click', closeSidebar);
+        // Fermer si on redimensionne au-delà du breakpoint
+        window.addEventListener('resize', function(){
+          if (window.innerWidth > 860) closeSidebar();
+        });
+      })();
+    </script>
+</body>
+</html>

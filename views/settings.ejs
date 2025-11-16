@@ -1,0 +1,12 @@
+<% layout('layout') %>
+<div class="card">
+  <h3>Paramètres SMTP et identité</h3>
+  <p><strong>SMTP Host:</strong> <%= env.smtpHost %></p>
+  <p><strong>SMTP Port:</strong> <%= env.smtpPort %></p>
+  <p><strong>SMTP Secure:</strong> <%= env.smtpSecure %></p>
+  <p><strong>From Name:</strong> <%= env.fromName %></p>
+  <p><strong>From Email:</strong> <%= env.fromEmail %></p>
+  <p><strong>Reply-To:</strong> <%= env.replyTo %></p>
+
+  <p class="stat-value">(À venir) Formulaire pour modifier ces paramètres depuis l'interface.</p>
+</div>

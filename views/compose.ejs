@@ -1,0 +1,76 @@
+<% layout('layout') %>
+<div class="card">
+  <h3>Composer un e-mail</h3>
+  <form method="POST" action="/compose/send" enctype="multipart/form-data">
+    <div style="margin-bottom:10px;">
+      <label>Template (optionnel)</label><br/>
+      <select name="templateId" style="width:100%;padding:8px;">
+        <option value="">— Sans template —</option>
+        <% (templates||[]).forEach(t => { %>
+          <option value="<%= t._id %>"><%= t.name %> — <%= t.subject %></option>
+        <% }) %>
+      </select>
+    </div>
+    <div style="margin-bottom:10px;">
+      <label>Objet</label><br/>
+      <input type="text" name="subject" required style="width:100%;padding:8px;" />
+    </div>
+    <div style="margin-bottom:10px;">
+      <label>Contenu HTML</label><br/>
+      <textarea name="html" rows="10" required style="width:100%;padding:8px;"></textarea>
+    </div>
+    <div style="margin-bottom:10px;">
+      <label>Variables pour template (k:v, séparées par des virgules)</label><br/>
+      <input type="text" name="vars" placeholder="firstName:Alice,lastName:Durand" style="width:100%;padding:8px;" />
+      <p style="font-size:0.9em;color:var(--secondary-color)">Utilisées si un template est sélectionné. Ex: {{firstName}} dans le template sera remplacé par Alice.</p>
+    </div>
+    <div style="margin-bottom:10px;">
+      <label>Pièces jointes (images, etc.)</label><br/>
+      <input type="file" name="attachments" multiple />
+      <p style="font-size:0.9em;color:var(--secondary-color)">Formats courants acceptés (PNG, JPG, PDF). Taille limitée par le serveur SMTP. Pour insérer une image inline dans le HTML, référence-la ainsi: &lt;img src="cid:nomDuFichier.png" /&gt;.</p>
+    </div>
+
+    <hr/>
+    <h4>Destinataires</h4>
+    <div style="margin-bottom:10px;">
+      <label>E-mails (saisir un par ligne ou séparés par des virgules)</label><br/>
+      <textarea name="manualEmails" rows="4" placeholder="ex: alice@example.com, bob@example.com" style="width:100%;padding:8px;"></textarea>
+    </div>
+    <div style="margin-bottom:10px;">
+      <label>Importer un CSV (colonne email requise)</label><br/>
+      <input type="file" name="csv" accept=".csv" />
+    </div>
+
+    <div style="margin-bottom:10px;">
+      <label>Sélectionner depuis vos contacts</label>
+      <div style="margin:8px 0;">
+        <button type="button" class="button secondary" onclick="toggleAll(true)">Tout sélectionner</button>
+        <button type="button" class="button secondary" onclick="toggleAll(false)">Tout désélectionner</button>
+      </div>
+      <input type="text" id="contactSearch" placeholder="Rechercher un email/nom" style="width:100%;padding:8px;margin-bottom:8px;" oninput="filterContacts()" />
+      <div id="contactsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px;max-height:300px;overflow:auto;border:1px solid var(--border-color);padding:8px;">
+        <% (contacts||[]).forEach(c => { %>
+          <label class="contact-item" style="display:flex;gap:8px;align-items:center;border-bottom:1px dashed var(--border-color);padding:6px 0;">
+            <input type="checkbox" name="contactIds" value="<%= c._id %>" />
+            <span class="contact-text"><strong><%= c.email %></strong> <small style="color:var(--secondary-color)"><%= [c.firstName, c.lastName].filter(Boolean).join(' ') %></small></span>
+          </label>
+        <% }) %>
+      </div>
+    </div>
+
+    <button class="button" type="submit">Envoyer maintenant</button>
+  </form>
+</div>
+
+<script>
+function toggleAll(state) {
+  document.querySelectorAll('input[name="contactIds"]').forEach(cb => { cb.checked = state; });
+}
+function filterContacts(){
+  const q = (document.getElementById('contactSearch').value || '').toLowerCase();
+  document.querySelectorAll('#contactsGrid .contact-item').forEach(el => {
+    const txt = (el.querySelector('.contact-text').innerText || '').toLowerCase();
+    el.style.display = txt.includes(q) ? '' : 'none';
+  });
+}
+</script>

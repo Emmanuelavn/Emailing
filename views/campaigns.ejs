@@ -1,0 +1,78 @@
+<% layout('layout') %>
+<div class="card">
+  <h3>Créer une campagne</h3>
+  <form method="POST" action="/campaigns">
+    <div style="margin-bottom:10px;">
+      <label>Nom de la campagne</label><br/>
+      <input type="text" name="name" required style="width:100%;padding:8px;" placeholder="Ex: Newsletter Semaine 46" />
+    </div>
+    <div style="margin-bottom:10px;">
+      <label>Template</label><br/>
+      <select name="templateId" required style="width:100%;padding:8px;">
+        <% (templates||[]).forEach(t => { %>
+          <option value="<%= t._id %>"><%= t.name %> — <%= t.subject %></option>
+        <% }) %>
+      </select>
+    </div>
+    <div style="margin-bottom:10px;">
+      <label>Tags ciblés (séparés par des virgules)</label><br/>
+      <input type="text" name="segmentTags" placeholder="client, vip" style="width:100%;padding:8px;" />
+      <small style="color:var(--secondary-color)">Laissez vide pour cibler tous les contacts actifs</small>
+    </div>
+    <div style="margin-bottom:10px;">
+      <label>Planification (optionnelle)</label><br/>
+      <input type="datetime-local" name="scheduledAt" style="padding:8px;" />
+    </div>
+    <button class="button" type="submit">Créer</button>
+  </form>
+</div>
+
+<div class="card">
+  <h3>Campagnes existantes</h3>
+  <% if (campaigns && campaigns.length) { %>
+    <table style="width:100%;border-collapse:collapse;">
+      <thead>
+        <tr style="text-align:left;border-bottom:1px solid var(--border-color);">
+          <th>Nom</th>
+          <th>Template</th>
+          <th>Tags</th>
+          <th>Statut</th>
+          <th>Audience estimée</th>
+          <th>Planifiée</th>
+          <th>Créée</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+      <% campaigns.forEach(c => { %>
+        <tr style="border-bottom:1px solid var(--border-color);">
+          <td><a href="/campaigns/<%= c._id %>" class="link"><%= c.name %></a></td>
+          <td><%= c.template ? c.template.name : '-' %></td>
+          <td>
+            <% if ((c.segmentTags||[]).length) { %>
+              <% (c.segmentTags||[]).forEach(tag => { %>
+                <span style="display:inline-block;background:#eef2ff;color:#3730a3;padding:4px 8px;border-radius:999px;margin-right:6px;font-size:0.85em"><%= tag %></span>
+              <% }) %>
+            <% } else { %>
+              <span style="display:inline-block;background:#f1f5f9;color:#0f172a;padding:4px 8px;border-radius:999px;font-size:0.85em">Tous</span>
+            <% } %>
+          </td>
+          <td>
+            <span style="display:inline-block;padding:4px 8px;border-radius:6px;background:#e2e8f0;color:#0f172a;font-size:0.85em"><%= c.status %></span>
+          </td>
+          <td><%= audience && audience[c._id] !== undefined ? audience[c._id] : '-' %></td>
+          <td><%= c.scheduledAt ? new Date(c.scheduledAt).toLocaleString('fr-FR') : '-' %></td>
+          <td><%= new Date(c.createdAt).toLocaleString('fr-FR') %></td>
+          <td>
+            <form method="POST" action="/campaigns/<%= c._id %>/run" style="display:inline;">
+              <button class="btn btn-secondary" type="submit" title="Lancer maintenant" <%= (c.status === 'running') ? 'disabled' : '' %>>Lancer</button>
+            </form>
+          </td>
+        </tr>
+      <% }) %>
+      </tbody>
+    </table>
+  <% } else { %>
+    <p>Aucune campagne pour l'instant.</p>
+  <% } %>
+</div>

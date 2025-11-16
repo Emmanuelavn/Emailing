@@ -1,0 +1,89 @@
+<%- include('partials/header', { title: title || 'Campagne' }) %>
+<div class="container">
+  <style>
+    .status-pill { display:inline-block; padding:4px 8px; border-radius:6px; font-size:0.9em; transition: background-color var(--transition-fast), color var(--transition-fast); }
+    .status-pill.ok { background:#dcfce7; color:#14532d; }
+    .status-pill.fail { background:#fee2e2; color:#7f1d1d; }
+  </style>
+  <h2 style="display:flex;align-items:center;gap:12px;">
+    <span class="badge" style="background:#eef2ff;color:#3730a3;padding:6px 10px;border-radius:8px;font-size:0.9em"><%= campaign.status %></span>
+    <%= campaign.name %>
+  </h2>
+
+  <div class="grid" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;">
+    <div class="card">
+      <h3>Template</h3>
+      <p><strong><%= campaign.template ? campaign.template.name : '-' %></strong></p>
+      <p>Sujet: <%= campaign.template ? campaign.template.subject : '-' %></p>
+    </div>
+    <div class="card">
+      <h3>Segmentation</h3>
+      <% if ((campaign.segmentTags||[]).length) { %>
+        <% (campaign.segmentTags||[]).forEach(tag => { %>
+          <span style="display:inline-block;background:#eef2ff;color:#3730a3;padding:4px 8px;border-radius:999px;margin-right:6px;font-size:0.85em"><%= tag %></span>
+        <% }) %>
+      <% } else { %>
+        <span style="display:inline-block;background:#f1f5f9;color:#0f172a;padding:4px 8px;border-radius:999px;font-size:0.85em">Tous les contacts actifs</span>
+      <% } %>
+    </div>
+    <div class="card">
+      <h3>Planification</h3>
+      <p>Prévue: <%= campaign.scheduledAt ? new Date(campaign.scheduledAt).toLocaleString('fr-FR') : '-' %></p>
+      <p>Créée: <%= new Date(campaign.createdAt).toLocaleString('fr-FR') %></p>
+      <form method="POST" action="/campaigns/<%= campaign._id %>/run">
+        <button class="btn btn-secondary" type="submit" <%= (campaign.status === 'running') ? 'disabled' : '' %>>Lancer maintenant</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="grid" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:16px;">
+    <div class="card">
+      <h3>Envoyés</h3>
+      <p style="font-size:2rem;font-weight:700"><%= stats.sent %></p>
+    </div>
+    <div class="card">
+      <h3>Échecs</h3>
+      <p style="font-size:2rem;font-weight:700;color:#b91c1c"><%= stats.failed %></p>
+    </div>
+    <div class="card">
+      <h3>Taux de succès</h3>
+      <% const total = stats.sent + stats.failed; const rate = total ? Math.round(stats.sent / total * 100) : 0; %>
+      <p style="font-size:2rem;font-weight:700;color:#065f46"><%= rate %>%</p>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px;">
+    <h3>Dernières activités</h3>
+    <% if (logs && logs.length) { %>
+      <table style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr style="text-align:left;border-bottom:1px solid var(--border-color);">
+            <th>Date</th>
+            <th>Contact</th>
+            <th>Statut</th>
+            <th>Message ID</th>
+            <th>Erreur</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% logs.forEach(l => { %>
+            <tr style="border-bottom:1px solid var(--border-color);">
+              <td><%= new Date(l.createdAt).toLocaleString('fr-FR') %></td>
+              <td><%= l.contactEmail || '-' %></td>
+              <td>
+                <span class="status-pill <%= l.status==='sent' ? 'ok' : 'fail' %>"><%= l.status %></span>
+              </td>
+              <td style="font-family:monospace"><%= l.messageId || '-' %></td>
+              <td style="color:#7f1d1d"><%= l.error || '' %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } else { %>
+      <p>Aucune activité pour le moment.</p>
+    <% } %>
+  </div>
+
+  <p style="margin-top:20px;"><a href="/campaigns" class="link">← Retour aux campagnes</a></p>
+</div>
+<%- include('partials/footer') %>

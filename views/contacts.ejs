@@ -1,0 +1,70 @@
+<% layout('layout') %>
+<div class="card">
+  <h3>Ajouter un contact</h3>
+  <form method="POST" action="/contacts">
+    <div style="margin-bottom:10px;">
+      <label>Email</label><br/>
+      <input type="email" name="email" required style="width:100%;padding:8px;" />
+    </div>
+    <div style="margin-bottom:10px;display:flex;gap:10px;">
+      <div style="flex:1;">
+        <label>Prénom</label><br/>
+        <input type="text" name="firstName" style="width:100%;padding:8px;" />
+      </div>
+      <div style="flex:1;">
+        <label>Nom</label><br/>
+        <input type="text" name="lastName" style="width:100%;padding:8px;" />
+      </div>
+    </div>
+    <div style="margin-bottom:10px;">
+      <label>Tags (séparés par des virgules)</label><br/>
+      <input type="text" name="tags" placeholder="client, vip" style="width:100%;padding:8px;" />
+    </div>
+    <button class="button" type="submit">Ajouter</button>
+  </form>
+</div>
+
+<div class="card">
+  <h3>Liste des contacts (max 100)</h3>
+  <% if (contacts && contacts.length) { %>
+    <table style="width:100%;border-collapse:collapse;">
+      <thead>
+        <tr style="text-align:left;border-bottom:1px solid var(--border-color);">
+          <th>Email</th>
+          <th>Nom</th>
+          <th>Tags</th>
+          <th>Statut</th>
+          <th>Créé le</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+      <% contacts.forEach(c => { %>
+        <tr style="border-bottom:1px solid var(--border-color);">
+          <td><%= c.email %></td>
+          <td><%= [c.firstName, c.lastName].filter(Boolean).join(' ') %></td>
+          <td><%= (c.tags||[]).join(', ') %></td>
+          <td><%= c.status %></td>
+          <td><%= new Date(c.createdAt).toLocaleString('fr-FR') %></td>
+          <td>
+            <form method="POST" action="/contacts/<%= c._id %>/delete" style="display:inline;" onsubmit="return confirm('Supprimer ce contact ?');">
+              <button class="button secondary" type="submit">Supprimer</button>
+            </form>
+          </td>
+        </tr>
+      <% }) %>
+      </tbody>
+    </table>
+  <% } else { %>
+    <p>Aucun contact pour l'instant.</p>
+  <% } %>
+</div>
+
+<div class="card">
+  <h3>Importer des contacts (CSV)</h3>
+  <form method="POST" action="/contacts/import" enctype="multipart/form-data">
+    <input type="file" name="file" accept=".csv" required />
+    <p style="font-size:0.9em;color:var(--secondary-color)">Colonnes supportées: email, firstName, lastName, tags</p>
+    <button class="button" type="submit">Importer</button>
+  </form>
+</div>

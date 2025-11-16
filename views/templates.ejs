@@ -1,0 +1,42 @@
+<% layout('layout') %>
+<div class="card">
+  <h3>Créer un template</h3>
+  <form method="POST" action="/templates">
+    <div style="margin-bottom:10px;">
+      <label>Nom du template</label><br/>
+      <input type="text" name="name" required style="width:100%;padding:8px;" />
+    </div>
+    <div style="margin-bottom:10px;">
+      <label>Objet</label><br/>
+      <input type="text" name="subject" required style="width:100%;padding:8px;" />
+    </div>
+    <div style="margin-bottom:10px;">
+      <label>Variables (séparées par des virgules)</label><br/>
+      <input type="text" name="variables" placeholder="firstName, promoCode" style="width:100%;padding:8px;" />
+    </div>
+    <div style="margin-bottom:10px;">
+      <label>HTML</label><br/>
+      <textarea name="html" rows="8" required style="width:100%;padding:8px;"></textarea>
+    </div>
+    <button class="button" type="submit">Enregistrer</button>
+  </form>
+</div>
+
+<div class="card">
+  <h3>Templates existants</h3>
+  <% if (templates && templates.length) { %>
+    <ul>
+      <% templates.forEach(t => { %>
+        <li>
+          <strong><%= t.name %></strong> — Objet: <%= t.subject %> — Vars: <%= (t.variables||[]).join(', ') %> — MAJ: <%= new Date(t.updatedAt).toLocaleString('fr-FR') %>
+          <form method="GET" action="/templates/<%= t._id %>/preview" style="display:inline-flex;gap:8px;margin-left:12px;align-items:center;">
+            <input name="vars" type="text" placeholder="firstName:Alice" style="padding:6px;min-width:200px;" />
+            <button class="button" type="submit">Prévisualiser</button>
+          </form>
+        </li>
+      <% }) %>
+    </ul>
+  <% } else { %>
+    <p>Aucun template pour l'instant.</p>
+  <% } %>
+</div>
