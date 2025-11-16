@@ -122,6 +122,9 @@ body {
     border-bottom: 1px solid var(--border-color);
 }
 
+/* Ensure navbar is positioned so absolute children (toggle) align correctly */
+.navbar { position: relative; }
+
 .navbar h2 {
     margin: 0;
     color: var(--text-dark);
@@ -216,6 +219,31 @@ body {
     transform: none;
 }
 
+/* Dashboard stats grid */
+.dashboard-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-top: 12px;
+}
+.stat-box {
+    background: linear-gradient(180deg, #ffffff, #fbfbfd);
+    border: 1px solid var(--border-color);
+    padding: 16px;
+    border-radius: 10px;
+    text-align: center;
+}
+.stat-box h4 {
+    margin: 0 0 8px 0;
+    font-size: 0.95rem;
+    color: var(--secondary-color);
+}
+.stat-value {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
 /* Alerts */
 .alert {
     padding: 12px 14px;
@@ -272,6 +300,13 @@ body {
     cursor: pointer;
 }
 
+.menu-toggle .menu-label {
+    display: none;
+    margin-left: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
 .sidebar-overlay {
     position: fixed;
     inset: 0;
@@ -305,12 +340,58 @@ body {
         height: 100vh;
         transform: translateX(-100%);
     }
+    /* Force the sidebar visible when the body has the sidebar-open class.
+       Use higher specificity + z-index to avoid other rules blocking it. */
     body.sidebar-open .sidebar {
-        transform: translateX(0);
+        transform: translateX(0) !important;
+        z-index: 9999;
     }
-    .menu-toggle { display: inline-flex; align-items: center; gap: 8px; }
+    /* Hide any old left menu-toggle and sidebar bars control */
+    .menu-toggle { display: none !important; }
+
+    /* When sidebar opens, prevent background scrolling */
+    body.sidebar-open { overflow: hidden; }
     body.sidebar-open .sidebar-overlay {
         opacity: 1;
         pointer-events: auto;
+        z-index: 9998;
     }
+
+    /* Single floating mobile three-dots button */
+    .mobile-dots-btn {
+        position: fixed;
+        top: 12px;
+        left: 12px;
+        right: auto;
+        background: var(--primary-color);
+        color: var(--text-light);
+        border: 0;
+        padding: 10px 12px;
+        border-radius: 12px;
+        box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+        z-index: 10002;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+    }
+    .mobile-dots-btn i { color: var(--text-light); font-size: 1.1rem; }
+    .mobile-dots-btn:focus { outline: 3px solid rgba(255,255,255,0.12); }
+
+    /* Hide floating button on larger screens */
+    @media (min-width: 861px) {
+        .mobile-dots-btn { display: none; }
+    }
+
+    /* Center the header title and ensure it doesn't overlap the left control */
+    .navbar { justify-content: center; }
+    .navbar-title {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        margin: 0;
+        font-size: 1.1rem;
+    }
+    /* Keep user-info on the right */
+    .navbar .user-info { position: relative; margin-left: auto; z-index: 1; }
 }

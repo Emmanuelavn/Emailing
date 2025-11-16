@@ -33,12 +33,7 @@
 
         <div class="main-content">
             <header class="navbar">
-                <div style="display:flex; align-items:center; gap:12px;">
-                    <button class="menu-toggle" aria-label="Ouvrir le menu" title="Menu">
-                        <i class="fas fa-bars"></i>
-                    </button>
-                    <h2 style="margin:0;"><%= title %></h2>
-                </div>
+                <h2 class="navbar-title"><%= title %></h2>
                 <div class="user-info">
                     <span>Bienvenue, <%= (typeof currentUser !== 'undefined' && currentUser) ? currentUser.username : 'Invité' %></span>
                     <i class="fas fa-user-circle"></i>
@@ -56,22 +51,42 @@
             </footer>
         </div>
     </div>
-    <script>
-      (function(){
-        const toggle = document.querySelector('.menu-toggle');
-        const overlay = document.querySelector('.sidebar-overlay');
-        const body = document.body;
-        function closeSidebar(){ body.classList.remove('sidebar-open'); }
-        function openSidebar(){ body.classList.add('sidebar-open'); }
-        toggle && toggle.addEventListener('click', function(){
-          if (body.classList.contains('sidebar-open')) closeSidebar(); else openSidebar();
-        });
-        overlay && overlay.addEventListener('click', closeSidebar);
-        // Fermer si on redimensionne au-delà du breakpoint
-        window.addEventListener('resize', function(){
-          if (window.innerWidth > 860) closeSidebar();
-        });
-      })();
-    </script>
+        <!-- Mobile three-dots button (vertical ellipsis) -->
+        <button class="mobile-dots-btn" aria-label="Menu options" title="Options">
+            <i class="fas fa-ellipsis-vertical" aria-hidden="true"></i>
+        </button>
+
+        <script>
+            (function(){
+                const dotsBtn = document.querySelector('.mobile-dots-btn');
+                const overlay = document.querySelector('.sidebar-overlay');
+                const body = document.body;
+                function closeSidebar(){
+                    body.classList.remove('sidebar-open');
+                    if (dotsBtn) dotsBtn.setAttribute('aria-expanded', 'false');
+                    if (overlay) overlay.setAttribute('aria-hidden', 'true');
+                }
+                function openSidebar(){
+                    body.classList.add('sidebar-open');
+                    if (dotsBtn) dotsBtn.setAttribute('aria-expanded', 'true');
+                    if (overlay) overlay.setAttribute('aria-hidden', 'false');
+                }
+                function toggleSidebar(){
+                    if (body.classList.contains('sidebar-open')) closeSidebar(); else openSidebar();
+                }
+
+                if (dotsBtn) {
+                    dotsBtn.setAttribute('aria-expanded', 'false');
+                    dotsBtn.addEventListener('click', function(e){ e.preventDefault(); toggleSidebar(); });
+                }
+                if (overlay) overlay.addEventListener('click', closeSidebar);
+
+                // Close on ESC
+                document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeSidebar(); });
+
+                // Fermer si on redimensionne au-delà du breakpoint
+                window.addEventListener('resize', function(){ if (window.innerWidth > 860) closeSidebar(); });
+            })();
+        </script>
 </body>
 </html>
