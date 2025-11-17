@@ -52,8 +52,7 @@ async function sendEmail({
     }
 
     const from = fromName ? `${fromName} <${fromEmail}>` : fromEmail;
-
-    const info = await transporter.sendMail({
+    const mailOptions = {
         from,
         to,
         subject,
@@ -61,10 +60,23 @@ async function sendEmail({
         html,
         replyTo,
         attachments
-    });
+    };
 
-    console.log('E-mail envoyé, messageId:', info.messageId);
-    return info;
+    let lastError = null;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+            const info = await transporter.sendMail(mailOptions);
+            console.log(`E-mail envoyé (tentative ${attempt}), messageId:`, info.messageId);
+            return info;
+        } catch (err) {
+            lastError = err;
+            console.error(`Erreur envoi mail (tentative ${attempt}):`, err && err.message ? err.message : err);
+            if (err && err.stack) console.error('Stack:', err.stack);
+            // Attendre avant retry (backoff exponentiel)
+            await new Promise(r => setTimeout(r, 1000 * Math.pow(2, attempt - 1)));
+        }
+    }
+    throw new Error(`Echec envoi mail après 3 tentatives: ${lastError && lastError.message ? lastError.message : lastError}`);
 }
 
 module.exports = { sendEmail };
