@@ -1,0 +1,180 @@
+<% layout('layout') %>
+<div style="max-width:1200px;margin:0 auto;">
+    <!-- En-tête avec statistiques -->
+    <div style="background:linear-gradient(135deg,var(--primary-color),var(--primary-color-dark));color:white;padding:30px;border-radius:12px;margin-bottom:30px;box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+        <h1 style="margin:0 0 10px 0;font-size:2rem;display:flex;align-items:center;gap:10px;">
+            📋 Historique des Envois
+        </h1>
+        <% if (logs && logs.length > 0) { %>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:15px;margin-top:20px;">
+                <div style="background:rgba(255,255,255,0.15);padding:12px;border-radius:8px;text-align:center;">
+                    <div style="font-size:0.9rem;opacity:0.9;">Total d'envois</div>
+                    <div style="font-size:1.8rem;font-weight:bold;"><%= logs.length %></div>
+                </div>
+                <div style="background:rgba(255,255,255,0.15);padding:12px;border-radius:8px;text-align:center;">
+                    <div style="font-size:0.9rem;opacity:0.9;">✓ Réussis</div>
+                    <div style="font-size:1.8rem;font-weight:bold;"><%= logs.filter(l => l.status === 'sent').length %></div>
+                </div>
+                <div style="background:rgba(255,255,255,0.15);padding:12px;border-radius:8px;text-align:center;">
+                    <div style="font-size:0.9rem;opacity:0.9;">✕ Échecs</div>
+                    <div style="font-size:1.8rem;font-weight:bold;"><%= logs.filter(l => l.status !== 'sent').length %></div>
+                </div>
+            </div>
+        <% } %>
+    </div>
+
+    <!-- Barre d'actions -->
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:25px;">
+        <a href="/history" class="button" style="display:flex;align-items:center;gap:6px;padding:10px 16px;">
+            <i class="fas fa-sync-alt"></i> Actualiser
+        </a>
+        <a href="/compose" class="button" style="display:flex;align-items:center;gap:6px;padding:10px 16px;">
+            <i class="fas fa-envelope"></i> Nouveau message
+        </a>
+        <button onclick="if(confirm('Supprimer TOUS les historiques ? Cette action est irréversible.')) window.location.href='/history/delete-all'" class="button secondary" style="display:flex;align-items:center;gap:6px;padding:10px 16px;margin-left:auto;">
+            <i class="fas fa-trash"></i> Tout supprimer
+        </button>
+        <button onclick="if(confirm('Réinitialiser le dashboard ? Cela supprimera tous les logs.')) window.location.href='/history/reset-dashboard'" class="button secondary" style="display:flex;align-items:center;gap:6px;padding:10px 16px;">
+            <i class="fas fa-redo"></i> Réinitialiser
+        </button>
+    </div>
+
+    <!-- Contenu principal -->
+    <% if (logs && logs.length > 0) { %>
+        <!-- Vue en cartes (mobile-friendly) -->
+        <div id="cardView" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:15px;margin-bottom:20px;">
+            <% logs.slice(0, 20).forEach(log => { %>
+                <div class="history-card" style="background:white;border:1px solid var(--border-color);border-radius:12px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,0.05);transition:all 0.3s ease;">
+                    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px;">
+                        <div style="flex:1;">
+                            <h4 style="margin:0 0 4px 0;color:var(--text-dark);font-size:0.95rem;">
+                                <%= log.contactEmail || (log.contact ? log.contact.email : '?') %>
+                            </h4>
+                            <div style="font-size:0.85rem;color:var(--secondary-color);">
+                                <%= new Date(log.createdAt).toLocaleString('fr-FR') %>
+                            </div>
+                        </div>
+                        <div>
+                            <% if (log.status === 'sent') { %>
+                                <span style="display:inline-block;padding:4px 10px;border-radius:20px;background:#dcfce7;color:#166534;font-weight:600;font-size:0.85rem;">✓ Envoyé</span>
+                            <% } else { %>
+                                <span style="display:inline-block;padding:4px 10px;border-radius:20px;background:#fee2e2;color:#b91c1c;font-weight:600;font-size:0.85rem;">✕ Échec</span>
+                            <% } %>
+                        </div>
+                    </div>
+                    
+                    <% if (log.messageId) { %>
+                        <div style="margin-bottom:12px;padding:8px;background:#f9f9f9;border-radius:6px;border-left:3px solid var(--primary-color);">
+                            <div style="font-size:0.75rem;color:var(--secondary-color);margin-bottom:4px;">Message ID</div>
+                            <div style="font-family:monospace;font-size:0.8rem;word-break:break-all;color:var(--text-dark);">
+                                <%= log.messageId %>
+                            </div>
+                        </div>
+                    <% } %>
+
+                    <% if (log.error) { %>
+                        <div style="margin-bottom:12px;padding:8px;background:#fee2e2;border-radius:6px;border-left:3px solid #b91c1c;">
+                            <div style="font-size:0.75rem;color:#b91c1c;margin-bottom:4px;">⚠️ Erreur</div>
+                            <div style="font-size:0.8rem;color:#991b1b;">
+                                <%= log.error %>
+                            </div>
+                        </div>
+                    <% } %>
+
+                    <form method="POST" action="/history/<%= log._id %>/delete" style="display:flex;gap:8px;">
+                        <button type="submit" class="button secondary" style="flex:1;padding:8px;font-size:0.85rem;cursor:pointer;border:1px solid var(--border-color);" onclick="return confirm('Supprimer cet envoi ?')">
+                            <i class="fas fa-trash-alt"></i> Supprimer
+                        </button>
+                    </form>
+                </div>
+            <% }) %>
+        </div>
+
+        <% if (logs.length > 20) { %>
+            <div style="text-align:center;padding:20px;color:var(--secondary-color);">
+                <p>Affichage des 20 derniers envois sur <%= logs.length %> total</p>
+                <a href="/history" class="button secondary" style="display:inline-block;margin-top:10px;">Voir tous</a>
+            </div>
+        <% } %>
+
+        <!-- Statistique footer -->
+        <div style="text-align:center;padding:20px;background:#f9f9f9;border-radius:8px;margin-top:20px;">
+            <p style="margin:0;color:var(--secondary-color);font-size:0.9rem;">
+                Taux de réussite: <strong style="color:var(--primary-color);font-size:1.1rem;">
+                    <%= Math.round((logs.filter(l => l.status === 'sent').length / logs.length) * 100) %>%
+                </strong>
+            </p>
+        </div>
+
+    <% } else { %>
+        <!-- État vide -->
+        <div style="text-align:center;padding:60px 20px;background:linear-gradient(135deg,#f0f4f8,#e8eef5);border-radius:12px;border:2px dashed var(--border-color);">
+            <div style="font-size:3rem;margin-bottom:20px;">📭</div>
+            <h2 style="color:var(--text-dark);margin:0 0 10px 0;font-size:1.5rem;">Aucun historique d'envoi</h2>
+            <p style="color:var(--secondary-color);margin:0 0 20px 0;font-size:0.95rem;">
+                Il n'y a pas encore d'envoi enregistré. Commencez en composant un nouveau message.
+            </p>
+            <a href="/compose" class="button" style="display:inline-block;padding:12px 24px;font-weight:600;">
+                <i class="fas fa-envelope"></i> Composer un email
+            </a>
+        </div>
+    <% } %>
+</div>
+
+<style>
+    .history-card {
+        cursor:pointer;
+        position:relative;
+        overflow:hidden;
+    }
+
+    .history-card::before {
+        content:'';
+        position:absolute;
+        top:0;
+        left:0;
+        right:0;
+        height:2px;
+        background:linear-gradient(90deg,var(--primary-color),var(--primary-color-dark));
+        transform:scaleX(0);
+        transform-origin:left;
+        transition:transform 0.3s ease;
+    }
+
+    .history-card:hover::before {
+        transform:scaleX(1);
+    }
+
+    .history-card:hover {
+        box-shadow:0 4px 16px rgba(0,0,0,0.1);
+        border-color:var(--primary-color);
+    }
+
+    @media (max-width: 860px) {
+        #cardView {
+            grid-template-columns:1fr !important;
+        }
+
+        .history-card {
+            padding:12px !important;
+        }
+
+        .history-card h4 {
+            font-size:0.9rem !important;
+        }
+
+        .button {
+            padding:8px 12px !important;
+            font-size:0.85rem !important;
+        }
+    }
+
+    @keyframes slideDown {
+        from { opacity:0; transform:translateY(-20px); }
+        to { opacity:1; transform:translateY(0); }
+    }
+
+    .history-card {
+        animation:slideDown 0.3s ease;
+    }
+</style>

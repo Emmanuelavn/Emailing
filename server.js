@@ -186,13 +186,13 @@ app.post('/compose/send', requireAuth, upload.fields([
         // Si un template est choisi, on rend avec variables
         if (templateId) {
             const tpl = await Template.findById(templateId);
-            if (!tpl) return res.status(400).send('Template introuvable');
+            if (!tpl) return res.json({ success: false, message: 'Template introuvable' });
             const varsObj = parseVars(vars || '');
             finalSubject = renderWithVariables(tpl.subject || '', varsObj);
             finalHtml = renderWithVariables(tpl.html || '', varsObj);
         }
 
-        if (!finalSubject || !finalHtml) return res.status(400).send('Sujet et contenu HTML requis');
+        if (!finalSubject || !finalHtml) return res.json({ success: false, message: 'Sujet et contenu HTML requis' });
 
         // Récupérer les emails saisis manuellement
         let emails = [];
@@ -227,7 +227,7 @@ app.post('/compose/send', requireAuth, upload.fields([
 
         // Déduplication et validation simple
         const uniq = Array.from(new Set(emails)).filter(e => /.+@.+\..+/.test(e));
-        if (!uniq.length) return res.status(400).send('Aucun destinataire valide fourni');
+        if (!uniq.length) return res.json({ success: false, message: 'Aucun destinataire valide fourni' });
 
         // Préparer les pièces jointes
         let attachments = [];
@@ -240,39 +240,97 @@ app.post('/compose/send', requireAuth, upload.fields([
             }));
         }
 
-        // Envoi séquentiel avec throttling simple (50ms)
+        // Envoi séquentiel avec throttling augmenté (100ms) et timeout
         let sent = 0, failed = 0;
         for (const to of uniq) {
             try {
-                const info = await sendEmail({ to, subject: finalSubject, html: finalHtml, attachments });
+                // Wrapper avec timeout pour éviter les blocages
+                const sendPromise = sendEmail({ to, subject: finalSubject, html: finalHtml, attachments });
+                const timeoutPromise = new Promise((_, rej) => 
+                    setTimeout(() => rej(new Error('Timeout envoi')), 10000)
+                );
+                const info = await Promise.race([sendPromise, timeoutPromise]);
+                
                 sent++;
-                await require('./models/SendLog').create({
+                const SendLog = require('./models/SendLog');
+                await SendLog.create({
                     contactEmail: to,
                     messageId: info.messageId,
                     status: 'sent'
                 });
+                console.log(`✓ Email envoyé vers ${to}`);
             } catch (err) {
                 console.error('Erreur envoi vers', to, err.message);
                 failed++;
-                await require('./models/SendLog').create({
+                const SendLog = require('./models/SendLog');
+                await SendLog.create({
                     contactEmail: to,
                     status: 'failed',
                     error: err.message
                 });
             }
-            await new Promise(r => setTimeout(r, 50));
+            // Throttling: attendre 100ms entre chaque email
+            await new Promise(r => setTimeout(r, 100));
         }
 
-        res.render('dashboard', {
-            title: 'Tableau de Bord',
-            activePage: 'dashboard',
+        // Retourner JSON au lieu de rediriger
+        res.json({
+            success: true,
+            sent,
+            failed,
+            total: uniq.length,
             message: `Envoi terminé: ${sent} envoyé(s), ${failed} échec(s)`
         });
     } catch (err) {
         console.error('Erreur compose/send:', err);
+        res.json({ success: false, message: 'Erreur: ' + err.message });
+    }
+});
+
+// --- Historique des envois ---
+app.get('/history', requireAuth, async (req, res) => {
+    try {
+        const logs = await SendLog.find({}).sort({ createdAt: -1 }).lean();
+        res.render('history', { title: 'Historique', activePage: 'history', logs });
+    } catch (err) {
+        console.error('Erreur history:', err);
         res.status(400).send('Erreur: ' + err.message);
     }
 });
+
+// Supprimer un envoi de l'historique
+app.post('/history/:id/delete', requireAuth, async (req, res) => {
+    try {
+        await SendLog.findByIdAndDelete(req.params.id);
+        res.redirect('/history');
+    } catch (err) {
+        console.error('Erreur delete log:', err);
+        res.status(400).send('Erreur: ' + err.message);
+    }
+});
+
+// Supprimer tous les historiques
+app.post('/history/delete-all', requireAuth, async (req, res) => {
+    try {
+        await SendLog.deleteMany({});
+        res.redirect('/history');
+    } catch (err) {
+        console.error('Erreur delete all logs:', err);
+        res.status(400).send('Erreur: ' + err.message);
+    }
+});
+
+// Réinitialiser le dashboard (supprimer tous les logs et rafraîchir)
+app.post('/history/reset-dashboard', requireAuth, async (req, res) => {
+    try {
+        await SendLog.deleteMany({});
+        res.redirect('/');
+    } catch (err) {
+        console.error('Erreur reset dashboard:', err);
+        res.status(400).send('Erreur: ' + err.message);
+    }
+});
+
 // Contacts: liste et création simple
 app.get('/contacts', requireAuth, async (req, res) => {
     const contacts = await Contact.find({}).sort({ createdAt: -1 }).limit(100);
@@ -281,12 +339,11 @@ app.get('/contacts', requireAuth, async (req, res) => {
 
 app.post('/contacts', requireAuth, async (req, res) => {
     try {
-        const { email, firstName, lastName, tags } = req.body;
-        const tagList = (tags || '')
-            .split(',')
-            .map(t => t.trim())
-            .filter(Boolean);
-        await Contact.create({ email, firstName, lastName, tags: tagList });
+        const { email, firstName, lastName } = req.body;
+        if (!email) {
+            return res.status(400).send('Email requis');
+        }
+        await Contact.create({ email: email.toLowerCase(), firstName, lastName });
         res.redirect('/contacts');
     } catch (err) {
         console.error('Erreur création contact:', err);
@@ -410,14 +467,10 @@ app.post('/contacts/import', requireAuth, upload.single('file'), async (req, res
             if (!email || !/.+@.+\..+/.test(email)) continue;
             const firstName = (r.firstName || '').trim();
             const lastName = (r.lastName || '').trim();
-            const tags = (r.tags || '')
-                .split(',')
-                .map(t => t.trim())
-                .filter(Boolean);
             try {
                 await Contact.updateOne(
                     { email },
-                    { $setOnInsert: { email, firstName, lastName, tags, status: 'active' } },
+                    { $setOnInsert: { email, firstName, lastName, status: 'active' } },
                     { upsert: true }
                 );
                 inserted++;

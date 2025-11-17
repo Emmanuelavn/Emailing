@@ -1,66 +1,82 @@
 <% layout('layout') %>
-    <div class="card">
-        <h3>Bienvenue sur votre Tableau de Bord !</h3>
-        <p><%= message %></p>
 
-        <p>Ici, vous trouverez un aperçu de vos campagnes d'e-mails, des statistiques clés, et des raccourcis vers les actions fréquentes.</p>
-
-        <div class="dashboard-stats">
-            <div class="stat-box">
-                <h4>E-mails envoyés aujourd'hui</h4>
-                <p class="stat-value"><%= (typeof stats !== 'undefined' && stats && stats.sentToday != null) ? stats.sentToday : 0 %></p>
-            </div>
-            <div class="stat-box">
-                <h4>E-mails en échec aujourd'hui</h4>
-                <p class="stat-value" style="color:#c00"><%= (typeof stats !== 'undefined' && stats && stats.failedToday != null) ? stats.failedToday : 0 %></p>
-            </div>
-            <div class="stat-box">
-                <h4>Total Contacts</h4>
-                <p class="stat-value"><%= (typeof stats !== 'undefined' && stats && stats.totalContacts != null) ? stats.totalContacts : 0 %></p>
-            </div>
-        </div>
-
-        <% if (typeof users !== 'undefined' && users.length > 0) { %>
-            <div class="card">
-                <h3>Utilisateurs enregistrés (Test DB)</h3>
-                <ul>
-                    <% users.forEach(user => { %>
-                        <li><%= user.username %> (<%= user.email %>) - Créé le : <%= user.createdAt.toLocaleDateString('fr-FR') %></li>
-                    <% }); %>
-                </ul>
+    <!-- Welcome section - distinct from dashboard content -->
+    <div class="welcome-banner" style="background:linear-gradient(135deg,var(--primary-color),var(--primary-color-dark));color:white;padding:20px;border-radius:12px;margin-bottom:24px;box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+        <h2 style="margin:0 0 12px 0;font-size:1.6rem;">👋 Bienvenue sur votre Tableau de Bord !</h2>
+        <% if (typeof message !== 'undefined' && message) { %>
+            <div style="background:rgba(255,255,255,0.15);padding:10px 12px;border-radius:8px;border-left:4px solid white;font-weight:500;">
+                ✓ <%= message %>
             </div>
         <% } %>
+        <p style="margin:10px 0 0 0;opacity:0.95;font-size:0.95rem;">
+            Ici, vous trouverez un aperçu de vos campagnes d'e-mails, des statistiques clés, et des raccourcis vers les actions fréquentes.
+        </p>
+    </div>
 
-        <div class="card">
-            <h3>Actions Rapides</h3>
-            <a href="/compose" class="button">Composer & Envoyer</a>
+    <div class="dashboard-stats">
+        <div class="stat-box">
+            <h4>📧 E-mails envoyés aujourd'hui</h4>
+            <p class="stat-value"><%= (typeof stats !== 'undefined' && stats && stats.sentToday != null) ? stats.sentToday : 0 %></p>
         </div>
+        <div class="stat-box">
+            <h4>❌ E-mails en échec aujourd'hui</h4>
+            <p class="stat-value" style="color:#c00"><%= (typeof stats !== 'undefined' && stats && stats.failedToday != null) ? stats.failedToday : 0 %></p>
+        </div>
+        <div class="stat-box">
+            <h4>👥 Total Contacts</h4>
+            <p class="stat-value"><%= (typeof stats !== 'undefined' && stats && stats.totalContacts != null) ? stats.totalContacts : 0 %></p>
+        </div>
+    </div>
 
+    <% if (typeof users !== 'undefined' && users.length > 0) { %>
         <div class="card">
-            <h3>Envois récents</h3>
-            <% if (typeof recentLogs !== 'undefined' && recentLogs && recentLogs.length) { %>
-                <table style="width:100%;border-collapse:collapse;">
-                    <thead>
-                        <tr style="text-align:left;border-bottom:1px solid var(--border-color);">
-                            <th>Destinataire</th>
-                            <th>Statut</th>
-                            <th>MessageId</th>
-                            <th>Date</th>
+            <h3>Utilisateurs enregistrés (Test DB)</h3>
+            <ul>
+                <% users.forEach(user => { %>
+                    <li><%= user.username %> (<%= user.email %>) - Créé le : <%= user.createdAt.toLocaleDateString('fr-FR') %></li>
+                <% }); %>
+            </ul>
+        </div>
+    <% } %>
+
+    <div class="card">
+        <h3>Actions Rapides</h3>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <a href="/compose" class="button" style="flex:1;text-align:center;min-width:140px;">✉️ Composer & Envoyer</a>
+            <a href="/history" class="button secondary" style="flex:1;text-align:center;min-width:140px;">📋 Historique</a>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>Envois récents</h3>
+        <% if (typeof recentLogs !== 'undefined' && recentLogs && recentLogs.length) { %>
+            <table style="width:100%;border-collapse:collapse;">
+                <thead>
+                    <tr style="text-align:left;border-bottom:2px solid var(--border-color);background:#f5f5f5;">
+                        <th style="padding:10px;">Destinataire</th>
+                        <th style="padding:10px;">Statut</th>
+                        <th style="padding:10px;">MessageId</th>
+                        <th style="padding:10px;">Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% recentLogs.forEach(l => { %>
+                        <tr style="border-bottom:1px solid var(--border-color);">
+                            <td style="padding:10px;"><%= l.contactEmail || (l.contact ? l.contact.email : '') %></td>
+                            <td style="padding:10px;">
+                                <% if (l.status === 'sent') { %>
+                                    <span style="background:#dcfce7;color:#166534;padding:2px 6px;border-radius:4px;font-size:0.85rem;font-weight:500;">✓ Envoyé</span>
+                                <% } else { %>
+                                    <span style="background:#fee2e2;color:#b91c1c;padding:2px 6px;border-radius:4px;font-size:0.85rem;font-weight:500;">✕ Échec</span>
+                                <% } %>
+                            </td>
+                            <td style="padding:10px;font-family:monospace;font-size:0.85rem;color:var(--secondary-color);"><%= l.messageId || '-' %></td>
+                            <td style="padding:10px;white-space:nowrap;"><%= new Date(l.createdAt).toLocaleString('fr-FR') %></td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        <% recentLogs.forEach(l => { %>
-                            <tr style="border-bottom:1px solid var(--border-color);">
-                                <td><%= l.contactEmail || (l.contact ? l.contact.email : '') %></td>
-                                <td><%= l.status %></td>
-                                <td><%= l.messageId || '-' %></td>
-                                <td><%= new Date(l.createdAt).toLocaleString('fr-FR') %></td>
-                            </tr>
-                        <% }) %>
-                    </tbody>
-                </table>
-            <% } else { %>
-                <p>Aucun envoi récent.</p>
-            <% } %>
-        </div>
+                    <% }) %>
+                </tbody>
+            </table>
+        <% } else { %>
+            <p style="color:var(--secondary-color);text-align:center;padding:20px;">Aucun envoi récent. <a href="/compose" style="color:var(--primary-color);text-decoration:none;font-weight:600;">Composer un email</a></p>
+        <% } %>
     </div>

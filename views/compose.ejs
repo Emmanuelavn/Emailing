@@ -1,76 +1,303 @@
 <% layout('layout') %>
-<div class="card">
-  <h3>Composer un e-mail</h3>
-  <form method="POST" action="/compose/send" enctype="multipart/form-data">
-    <div style="margin-bottom:10px;">
-      <label>Template (optionnel)</label><br/>
-      <select name="templateId" style="width:100%;padding:8px;">
-        <option value="">— Sans template —</option>
-        <% (templates||[]).forEach(t => { %>
-          <option value="<%= t._id %>"><%= t.name %> — <%= t.subject %></option>
-        <% }) %>
-      </select>
-    </div>
-    <div style="margin-bottom:10px;">
-      <label>Objet</label><br/>
-      <input type="text" name="subject" required style="width:100%;padding:8px;" />
-    </div>
-    <div style="margin-bottom:10px;">
-      <label>Contenu HTML</label><br/>
-      <textarea name="html" rows="10" required style="width:100%;padding:8px;"></textarea>
-    </div>
-    <div style="margin-bottom:10px;">
-      <label>Variables pour template (k:v, séparées par des virgules)</label><br/>
-      <input type="text" name="vars" placeholder="firstName:Alice,lastName:Durand" style="width:100%;padding:8px;" />
-      <p style="font-size:0.9em;color:var(--secondary-color)">Utilisées si un template est sélectionné. Ex: {{firstName}} dans le template sera remplacé par Alice.</p>
-    </div>
-    <div style="margin-bottom:10px;">
-      <label>Pièces jointes (images, etc.)</label><br/>
-      <input type="file" name="attachments" multiple />
-      <p style="font-size:0.9em;color:var(--secondary-color)">Formats courants acceptés (PNG, JPG, PDF). Taille limitée par le serveur SMTP. Pour insérer une image inline dans le HTML, référence-la ainsi: &lt;img src="cid:nomDuFichier.png" /&gt;.</p>
-    </div>
+<div style="max-width:900px;margin:0 auto;">
+  <!-- En-tête -->
+  <div style="background:linear-gradient(135deg,var(--primary-color),var(--primary-color-dark));color:white;padding:30px;border-radius:12px;margin-bottom:30px;box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+    <h1 style="margin:0;font-size:1.8rem;display:flex;align-items:center;gap:10px;">
+      ✉️ Composer un E-mail
+    </h1>
+    <p style="margin:8px 0 0 0;opacity:0.9;">Rédigez et envoyez votre message à plusieurs destinataires</p>
+  </div>
 
-    <hr/>
-    <h4>Destinataires</h4>
-    <div style="margin-bottom:10px;">
-      <label>E-mails (saisir un par ligne ou séparés par des virgules)</label><br/>
-      <textarea name="manualEmails" rows="4" placeholder="ex: alice@example.com, bob@example.com" style="width:100%;padding:8px;"></textarea>
-    </div>
-    <div style="margin-bottom:10px;">
-      <label>Importer un CSV (colonne email requise)</label><br/>
-      <input type="file" name="csv" accept=".csv" />
-    </div>
+  <!-- Notification container for toast messages -->
+  <div id="notificationContainer" style="position:fixed;top:20px;right:20px;max-width:400px;z-index:10000;"></div>
 
-    <div style="margin-bottom:10px;">
-      <label>Sélectionner depuis vos contacts</label>
-      <div style="margin:8px 0;">
-        <button type="button" class="button secondary" onclick="toggleAll(true)">Tout sélectionner</button>
-        <button type="button" class="button secondary" onclick="toggleAll(false)">Tout désélectionner</button>
+  <form id="composeForm" enctype="multipart/form-data">
+    <!-- Contenu du message -->
+    <div class="card" style="background:white;border:1px solid var(--border-color);border-radius:12px;padding:24px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+      <h3 style="margin:0 0 20px 0;color:var(--primary-color);display:flex;align-items:center;gap:8px;">
+        <span>📝 Contenu du Message</span>
+      </h3>
+      
+      <div style="margin-bottom:20px;">
+        <label style="display:block;font-weight:600;margin-bottom:8px;color:var(--text-dark);">
+          <span style="color:#e74c3c;">*</span> Objet
+        </label>
+        <input type="text" name="subject" required placeholder="ex: Bienvenue chez nous !" style="width:100%;padding:12px;border:1px solid var(--border-color);border-radius:8px;font-size:1rem;" />
       </div>
-      <input type="text" id="contactSearch" placeholder="Rechercher un email/nom" style="width:100%;padding:8px;margin-bottom:8px;" oninput="filterContacts()" />
-      <div id="contactsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px;max-height:300px;overflow:auto;border:1px solid var(--border-color);padding:8px;">
-        <% (contacts||[]).forEach(c => { %>
-          <label class="contact-item" style="display:flex;gap:8px;align-items:center;border-bottom:1px dashed var(--border-color);padding:6px 0;">
-            <input type="checkbox" name="contactIds" value="<%= c._id %>" />
-            <span class="contact-text"><strong><%= c.email %></strong> <small style="color:var(--secondary-color)"><%= [c.firstName, c.lastName].filter(Boolean).join(' ') %></small></span>
-          </label>
-        <% }) %>
+      
+      <div style="margin-bottom:20px;">
+        <label style="display:block;font-weight:600;margin-bottom:8px;color:var(--text-dark);">
+          <span style="color:#e74c3c;">*</span> Contenu HTML
+        </label>
+        <textarea name="html" rows="12" required placeholder="Votre contenu HTML ici..." style="width:100%;padding:12px;border:1px solid var(--border-color);border-radius:8px;font-family:monospace;font-size:0.95rem;"></textarea>
+        <p style="font-size:0.85rem;color:var(--secondary-color);margin:8px 0 0 0;">💡 Vous pouvez utiliser du HTML pur ou des variables comme {{firstName}}</p>
+      </div>
+
+      <div style="margin-bottom:0;">
+        <label style="display:block;font-weight:600;margin-bottom:8px;color:var(--text-dark);">
+          📎 Pièces jointes (optionnel)
+        </label>
+        <input type="file" name="attachments" multiple accept="image/*,.pdf" style="padding:8px;width:100%;" />
+        <p style="font-size:0.85rem;color:var(--secondary-color);margin:8px 0 0 0;">
+          PNG, JPG, PDF acceptés. Pour insérer inline: <code>&lt;img src="cid:nomFichier.png" /&gt;</code>
+        </p>
       </div>
     </div>
 
-    <button class="button" type="submit">Envoyer maintenant</button>
+    <!-- Options avancées (collapsible) -->
+    <details style="margin-bottom:20px;background:white;border:1px solid var(--border-color);border-radius:12px;padding:0;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+      <summary style="cursor:pointer;font-weight:600;color:var(--primary-color);padding:16px;background:#f9f9f9;border-bottom:1px solid var(--border-color);display:flex;align-items:center;gap:8px;user-select:none;">
+        <span>⚙️ Options avancées (Template &amp; Variables)</span>
+        <span style="margin-left:auto;">▼</span>
+      </summary>
+      <div style="padding:20px;background:white;">
+        <div style="margin-bottom:16px;">
+          <label style="display:block;font-weight:600;margin-bottom:8px;color:var(--text-dark);">Template (optionnel)</label>
+          <select name="templateId" style="width:100%;padding:12px;border:1px solid var(--border-color);border-radius:8px;font-size:0.95rem;">
+            <option value="">— Aucun template —</option>
+            <% (templates||[]).forEach(t => { %>
+              <option value="<%= t._id %>"><%= t.name %> — <%= t.subject %></option>
+            <% }) %>
+          </select>
+          <p style="font-size:0.85rem;color:var(--secondary-color);margin:8px 0 0 0;">Sélectionnez un template pour utiliser son contenu</p>
+        </div>
+        <div>
+          <label style="display:block;font-weight:600;margin-bottom:8px;color:var(--text-dark);">Variables de template (optionnel)</label>
+          <input type="text" name="vars" placeholder="firstName:Alice,lastName:Durand" style="width:100%;padding:12px;border:1px solid var(--border-color);border-radius:8px;" />
+          <p style="font-size:0.85rem;color:var(--secondary-color);margin:8px 0 0 0;">Format: clé:valeur séparées par virgules. Les variables {{clé}} du template seront remplacées.</p>
+        </div>
+      </div>
+    </details>
+
+    <!-- Section Destinataires -->
+    <div class="card" style="background:white;border:1px solid var(--border-color);border-radius:12px;padding:24px;box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+      <h3 style="margin:0 0 20px 0;color:var(--primary-color);display:flex;align-items:center;gap:8px;">
+        <span>👥 Sélectionner les Destinataires</span>
+        <span style="font-size:0.8rem;background:#dcfce7;color:#166534;padding:4px 10px;border-radius:12px;margin-left:auto;font-weight:600;" id="recipientCount">0 sélectionné(s)</span>
+      </h3>
+
+      <!-- Onglets de sélection -->
+      <div style="display:flex;gap:8px;margin-bottom:20px;border-bottom:2px solid var(--border-color);">
+        <button type="button" class="tab-btn active" data-tab="manual" style="padding:10px 16px;border:none;background:transparent;color:var(--primary-color);font-weight:600;cursor:pointer;border-bottom:3px solid var(--primary-color);margin-bottom:-2px;">
+          ✎ Saisir manuellement
+        </button>
+        <button type="button" class="tab-btn" data-tab="csv" style="padding:10px 16px;border:none;background:transparent;color:var(--secondary-color);font-weight:600;cursor:pointer;">
+          📄 Importer CSV
+        </button>
+        <button type="button" class="tab-btn" data-tab="contacts" style="padding:10px 16px;border:none;background:transparent;color:var(--secondary-color);font-weight:600;cursor:pointer;">
+          🗂️ Mes contacts
+        </button>
+      </div>
+
+      <!-- Onglet: Emails manuels -->
+      <div class="tab-content active" data-tab="manual" style="margin-bottom:20px;">
+        <label style="display:block;font-weight:600;margin-bottom:8px;color:var(--text-dark);">Entrez les e-mails</label>
+        <textarea name="manualEmails" rows="5" placeholder="ex: alice@example.com&#10;bob@example.com&#10;ou séparés par des virgules" style="width:100%;padding:12px;border:1px solid var(--border-color);border-radius:8px;font-size:0.95rem;"></textarea>
+        <p style="font-size:0.85rem;color:var(--secondary-color);margin:8px 0 0 0;">Un e-mail par ligne ou séparés par des virgules/points-virgules</p>
+      </div>
+
+      <!-- Onglet: CSV -->
+      <div class="tab-content" data-tab="csv" style="margin-bottom:20px;display:none;">
+        <label style="display:block;font-weight:600;margin-bottom:8px;color:var(--text-dark);">Importer un fichier CSV</label>
+        <input type="file" name="csv" accept=".csv" style="padding:12px;border:1px solid var(--border-color);border-radius:8px;width:100%;cursor:pointer;" />
+        <p style="font-size:0.85rem;color:var(--secondary-color);margin:8px 0 0 0;">⚠️ Le fichier doit contenir une colonne nommée "email"</p>
+      </div>
+
+      <!-- Onglet: Contacts -->
+      <div class="tab-content" data-tab="contacts" style="display:none;">
+        <div style="margin-bottom:15px;">
+          <label style="display:block;font-weight:600;margin-bottom:8px;color:var(--text-dark);">Sélectionner depuis vos contacts</label>
+          <div style="display:flex;gap:8px;margin-bottom:12px;">
+            <button type="button" class="button secondary" onclick="toggleAll(true)" style="flex:1;padding:10px;font-size:0.9rem;">
+              ✓ Tout sélectionner
+            </button>
+            <button type="button" class="button secondary" onclick="toggleAll(false)" style="flex:1;padding:10px;font-size:0.9rem;">
+              ✕ Tout désélectionner
+            </button>
+          </div>
+          <input type="text" id="contactSearch" placeholder="🔍 Rechercher par email ou nom..." style="width:100%;padding:10px;border:1px solid var(--border-color);border-radius:8px;margin-bottom:12px;" oninput="filterContacts()" />
+          <div id="contactsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;max-height:350px;overflow-y:auto;border:1px solid var(--border-color);padding:10px;border-radius:8px;background:#fafafa;">
+            <% if ((contacts||[]).length === 0) { %>
+              <div style="grid-column:1/-1;text-align:center;padding:30px;color:var(--secondary-color);">
+                <p>Aucun contact disponible</p>
+              </div>
+            <% } else { %>
+              <% (contacts||[]).forEach(c => { %>
+                <label class="contact-item" style="display:flex;gap:10px;align-items:flex-start;padding:10px;background:white;border:1px solid var(--border-color);border-radius:8px;cursor:pointer;transition:all 0.2s ease;">
+                  <input type="checkbox" name="contactIds" value="<%= c._id %>" onchange="updateRecipientCount()" style="margin-top:4px;cursor:pointer;" />
+                  <div style="flex:1;min-width:0;">
+                    <div style="font-weight:600;color:var(--text-dark);word-break:break-all;">
+                      <%= c.email %>
+                    </div>
+                    <div style="font-size:0.85rem;color:var(--secondary-color);">
+                      <%= [c.firstName, c.lastName].filter(Boolean).join(' ') || '(pas de nom)' %>
+                    </div>
+                  </div>
+                </label>
+              <% }) %>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bouton d'envoi -->
+    <div style="margin-top:24px;display:flex;gap:12px;">
+      <button id="submitBtn" class="button" type="submit" style="flex:1;padding:14px;font-weight:600;font-size:1rem;display:flex;align-items:center;justify-content:center;gap:8px;">
+        <span>📤</span> Envoyer maintenant
+      </button>
+      <a href="/" class="button secondary" style="padding:14px 20px;text-decoration:none;text-align:center;font-weight:600;display:flex;align-items:center;gap:8px;">
+        <span>🏠</span> Retour
+      </a>
+    </div>
   </form>
 </div>
 
 <script>
-function toggleAll(state) {
-  document.querySelectorAll('input[name="contactIds"]').forEach(cb => { cb.checked = state; });
+// Gestion des onglets
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    const tab = btn.dataset.tab;
+    
+    // Désactiver tous les onglets
+    document.querySelectorAll('.tab-btn').forEach(b => {
+      b.style.color = 'var(--secondary-color)';
+      b.style.borderBottom = 'none';
+      b.style.marginBottom = '0';
+    });
+    document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+    
+    // Activer l'onglet sélectionné
+    btn.style.color = 'var(--primary-color)';
+    btn.style.borderBottom = '3px solid var(--primary-color)';
+    btn.style.marginBottom = '-2px';
+    btn.classList.add('active');
+    document.querySelector(`.tab-content[data-tab="${tab}"]`).style.display = 'block';
+  });
+});
+
+function updateRecipientCount() {
+  const count = document.querySelectorAll('input[name="contactIds"]:checked').length;
+  document.getElementById('recipientCount').textContent = `${count} sélectionné(s)`;
 }
+
+function toggleAll(state) {
+  document.querySelectorAll('input[name="contactIds"]').forEach(cb => { 
+    cb.checked = state;
+  });
+  updateRecipientCount();
+}
+
 function filterContacts(){
   const q = (document.getElementById('contactSearch').value || '').toLowerCase();
-  document.querySelectorAll('#contactsGrid .contact-item').forEach(el => {
-    const txt = (el.querySelector('.contact-text').innerText || '').toLowerCase();
+  document.querySelectorAll('.contact-item').forEach(el => {
+    const txt = (el.textContent || '').toLowerCase();
     el.style.display = txt.includes(q) ? '' : 'none';
   });
 }
+
+// Toast notification system
+function showNotification(message, type = 'info', duration = 5000) {
+  const container = document.getElementById('notificationContainer');
+  const toast = document.createElement('div');
+  const bgColor = { success: '#dcfce7', error: '#fee2e2', info: '#dbeafe', warning: '#fef3c7' }[type] || '#dbeafe';
+  const borderColor = { success: '#86efac', error: '#fca5a5', info: '#7dd3fc', warning: '#fcd34d' }[type] || '#7dd3fc';
+  const textColor = { success: '#166534', error: '#b91c1c', info: '#0c4a6e', warning: '#92400e' }[type] || '#0c4a6e';
+  const icon = { success: '✅', error: '❌', info: 'ℹ️', warning: '⚠️' }[type] || 'ℹ️';
+  
+  toast.style.cssText = `
+    background: ${bgColor};
+    color: ${textColor};
+    border: 2px solid ${borderColor};
+    padding: 14px 16px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    animation: slideIn 0.3s ease forwards;
+    font-weight: 500;
+  `;
+  toast.innerHTML = `<strong>${icon} ${message}</strong>`;
+  container.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.style.animation = 'slideOut 0.3s ease forwards';
+    setTimeout(() => toast.remove(), 300);
+  }, duration);
+}
+
+// Handle form submit via fetch
+document.getElementById('composeForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('submitBtn');
+  const originalText = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span>⏳</span> Envoi en cours...';
+  
+  try {
+    const formData = new FormData(document.getElementById('composeForm'));
+    const res = await fetch('/compose/send', { method: 'POST', body: formData });
+    const data = await res.json();
+    
+    if (data.success) {
+      showNotification(`🎉 ${data.message}`, 'success', 3000);
+      document.getElementById('composeForm').reset();
+      setTimeout(() => window.location.href = '/history', 1500);
+    } else {
+      showNotification(`Erreur: ${data.message}`, 'error', 5000);
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+    }
+  } catch (err) {
+    showNotification(`Erreur réseau: ${err.message}`, 'error', 5000);
+    btn.disabled = false;
+    btn.innerHTML = originalText;
+  }
+});
 </script>
+
+<style>
+  @media (max-width: 860px) {
+    .card {
+      padding: 16px !important;
+    }
+    
+    #contactsGrid {
+      grid-template-columns: 1fr !important;
+    }
+    
+    .button {
+      padding: 10px 12px !important;
+      font-size: 0.9rem !important;
+    }
+
+    details summary {
+      padding: 12px !important;
+      font-size: 0.95rem !important;
+    }
+
+    textarea, input[type="text"], input[type="file"], select {
+      font-size: 16px !important; /* Prevent zoom on iOS */
+    }
+  }
+
+  @keyframes slideIn {
+    from { transform: translateX(400px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes slideOut {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(400px); opacity: 0; }
+  }
+</style>
+
+<style>
+@keyframes slideIn {
+  from { transform: translateX(400px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+@keyframes slideOut {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(400px); opacity: 0; }
+}
+</style>

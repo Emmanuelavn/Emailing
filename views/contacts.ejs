@@ -1,70 +1,193 @@
 <% layout('layout') %>
-<div class="card">
-  <h3>Ajouter un contact</h3>
-  <form method="POST" action="/contacts">
-    <div style="margin-bottom:10px;">
-      <label>Email</label><br/>
-      <input type="email" name="email" required style="width:100%;padding:8px;" />
-    </div>
-    <div style="margin-bottom:10px;display:flex;gap:10px;">
-      <div style="flex:1;">
-        <label>Prénom</label><br/>
-        <input type="text" name="firstName" style="width:100%;padding:8px;" />
+<div style="max-width:1200px;margin:0 auto;">
+  <!-- En-tête -->
+  <div style="background:linear-gradient(135deg,var(--primary-color),var(--primary-color-dark));color:white;padding:30px;border-radius:12px;margin-bottom:30px;box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+    <h1 style="margin:0 0 10px 0;font-size:1.8rem;display:flex;align-items:center;gap:10px;">
+      👥 Gestion des Contacts
+    </h1>
+    <p style="margin:8px 0 0 0;opacity:0.9;">Organisez et importez vos contacts pour les envois de masse</p>
+    <% if (contacts && contacts.length > 0) { %>
+      <div style="margin-top:15px;font-size:0.95rem;">
+        <strong><%= contacts.length %></strong> contact(s) enregistré(s)
       </div>
-      <div style="flex:1;">
-        <label>Nom</label><br/>
-        <input type="text" name="lastName" style="width:100%;padding:8px;" />
-      </div>
-    </div>
-    <div style="margin-bottom:10px;">
-      <label>Tags (séparés par des virgules)</label><br/>
-      <input type="text" name="tags" placeholder="client, vip" style="width:100%;padding:8px;" />
-    </div>
-    <button class="button" type="submit">Ajouter</button>
-  </form>
-</div>
+    <% } %>
+  </div>
 
-<div class="card">
-  <h3>Liste des contacts (max 100)</h3>
-  <% if (contacts && contacts.length) { %>
-    <table style="width:100%;border-collapse:collapse;">
-      <thead>
-        <tr style="text-align:left;border-bottom:1px solid var(--border-color);">
-          <th>Email</th>
-          <th>Nom</th>
-          <th>Tags</th>
-          <th>Statut</th>
-          <th>Créé le</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-      <% contacts.forEach(c => { %>
-        <tr style="border-bottom:1px solid var(--border-color);">
-          <td><%= c.email %></td>
-          <td><%= [c.firstName, c.lastName].filter(Boolean).join(' ') %></td>
-          <td><%= (c.tags||[]).join(', ') %></td>
-          <td><%= c.status %></td>
-          <td><%= new Date(c.createdAt).toLocaleString('fr-FR') %></td>
-          <td>
-            <form method="POST" action="/contacts/<%= c._id %>/delete" style="display:inline;" onsubmit="return confirm('Supprimer ce contact ?');">
-              <button class="button secondary" type="submit">Supprimer</button>
+  <!-- Grille 2 colonnes -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(350px,1fr));gap:30px;margin-bottom:30px;">
+    
+    <!-- Formulaire ajout contact -->
+    <div class="card" style="background:white;border:1px solid var(--border-color);border-radius:12px;padding:24px;box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+      <h3 style="margin:0 0 20px 0;color:var(--primary-color);display:flex;align-items:center;gap:8px;">
+        <span>➕ Ajouter un Contact</span>
+      </h3>
+      <form method="POST" action="/contacts">
+        <div style="margin-bottom:16px;">
+          <label style="display:block;font-weight:600;margin-bottom:8px;color:var(--text-dark);">
+            <span style="color:#e74c3c;">*</span> Email
+          </label>
+          <input type="email" name="email" required placeholder="exemple@email.com" style="width:100%;padding:10px;border:1px solid var(--border-color);border-radius:8px;font-size:0.95rem;box-sizing:border-box;" />
+        </div>
+        
+        <div style="margin-bottom:16px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div>
+            <label style="display:block;font-weight:600;margin-bottom:8px;color:var(--text-dark);">Prénom</label>
+            <input type="text" name="firstName" placeholder="Jean" style="width:100%;padding:10px;border:1px solid var(--border-color);border-radius:8px;font-size:0.95rem;box-sizing:border-box;" />
+          </div>
+          <div>
+            <label style="display:block;font-weight:600;margin-bottom:8px;color:var(--text-dark);">Nom</label>
+            <input type="text" name="lastName" placeholder="Dupont" style="width:100%;padding:10px;border:1px solid var(--border-color);border-radius:8px;font-size:0.95rem;box-sizing:border-box;" />
+          </div>
+        </div>
+        
+        <button class="button" type="submit" style="width:100%;padding:12px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px;">
+          <span>✓</span> Ajouter ce contact
+        </button>
+      </form>
+    </div>
+
+    <!-- Formulaire import CSV -->
+    <div class="card" style="background:white;border:1px solid var(--border-color);border-radius:12px;padding:24px;box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+      <h3 style="margin:0 0 20px 0;color:var(--primary-color);display:flex;align-items:center;gap:8px;">
+        <span>📤 Importer des Contacts</span>
+      </h3>
+      <form method="POST" action="/contacts/import" enctype="multipart/form-data">
+        <div style="margin-bottom:16px;">
+          <label style="display:block;font-weight:600;margin-bottom:8px;color:var(--text-dark);">Fichier CSV</label>
+          <input type="file" name="file" accept=".csv" required style="width:100%;padding:10px;border:1px solid var(--border-color);border-radius:8px;cursor:pointer;" />
+          <p style="font-size:0.85rem;color:var(--secondary-color);margin:8px 0 0 0;">
+            📋 Format: email, firstName, lastName
+          </p>
+        </div>
+        <button class="button" type="submit" style="width:100%;padding:12px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px;">
+          <span>⬆️</span> Importer le fichier
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Liste des contacts -->
+  <div class="card" style="background:white;border:1px solid var(--border-color);border-radius:12px;padding:24px;box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <h3 style="margin:0;color:var(--primary-color);display:flex;align-items:center;gap:8px;">
+        <span>📋 Liste des Contacts</span>
+        <% if (contacts && contacts.length > 0) { %>
+          <span style="font-size:0.8rem;background:var(--primary-color);color:white;padding:4px 10px;border-radius:20px;">
+            <%= contacts.length %>
+          </span>
+        <% } %>
+      </h3>
+      <input type="text" id="contactSearch" placeholder="🔍 Rechercher un contact..." style="padding:8px 12px;border:1px solid var(--border-color);border-radius:8px;width:250px;font-size:0.95rem;" oninput="filterContacts()" />
+    </div>
+
+    <% if (contacts && contacts.length > 0) { %>
+      <!-- Vue en cartes responsive -->
+      <div id="contactsContainer" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:15px;">
+        <% contacts.forEach(c => { %>
+          <div class="contact-card" data-search="<%= c.email %> <%= c.firstName %> <%= c.lastName %>".toLowerCase()" style="background:white;border:1px solid var(--border-color);border-radius:12px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,0.05);transition:all 0.3s ease;display:flex;flex-direction:column;">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;">
+              <div style="flex:1;">
+                <div style="font-size:0.85rem;color:var(--secondary-color);margin-bottom:4px;">📧 Email</div>
+                <div style="font-weight:600;color:var(--text-dark);word-break:break-all;font-size:0.95rem;">
+                  <%= c.email %>
+                </div>
+              </div>
+            </div>
+
+            <% if (c.firstName || c.lastName) { %>
+              <div style="margin-bottom:12px;padding:10px;background:#f9f9f9;border-radius:8px;">
+                <div style="font-size:0.85rem;color:var(--secondary-color);margin-bottom:4px;">👤 Nom</div>
+                <div style="font-weight:500;color:var(--text-dark);">
+                  <%= [c.firstName, c.lastName].filter(Boolean).join(' ') %>
+                </div>
+              </div>
+            <% } %>
+
+            <div style="margin-bottom:12px;padding:10px;background:#f0f4f8;border-radius:8px;border-left:3px solid var(--primary-color);">
+              <div style="font-size:0.85rem;color:var(--secondary-color);margin-bottom:4px;">📅 Ajouté le</div>
+              <div style="font-size:0.9rem;color:var(--text-dark);">
+                <%= new Date(c.createdAt).toLocaleString('fr-FR') %>
+              </div>
+            </div>
+
+            <form method="POST" action="/contacts/<%= c._id %>/delete" style="display:flex;gap:8px;margin-top:auto;">
+              <button class="button secondary" type="submit" style="flex:1;padding:8px;font-size:0.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--border-color);" onclick="return confirm('Supprimer ce contact ?')">
+                <span>🗑️</span> Supprimer
+              </button>
             </form>
-          </td>
-        </tr>
-      <% }) %>
-      </tbody>
-    </table>
-  <% } else { %>
-    <p>Aucun contact pour l'instant.</p>
-  <% } %>
+          </div>
+        <% }) %>
+      </div>
+
+      <div style="text-align:center;padding:20px;background:#f9f9f9;border-radius:8px;margin-top:20px;">
+        <p style="margin:0;color:var(--secondary-color);font-size:0.9rem;">
+          Affichage de <strong><%= contacts.length %></strong> contact(s)
+        </p>
+      </div>
+
+    <% } else { %>
+      <!-- État vide -->
+      <div style="text-align:center;padding:60px 20px;background:linear-gradient(135deg,#f0f4f8,#e8eef5);border-radius:12px;border:2px dashed var(--border-color);">
+        <div style="font-size:3rem;margin-bottom:20px;">📭</div>
+        <h2 style="color:var(--text-dark);margin:0 0 10px 0;font-size:1.3rem;">Aucun contact pour le moment</h2>
+        <p style="color:var(--secondary-color);margin:0 0 20px 0;font-size:0.95rem;">
+          Ajoutez votre premier contact ou importez une liste depuis un fichier CSV.
+        </p>
+        <a href="#" style="display:inline-block;padding:10px 20px;background:var(--primary-color);color:white;text-decoration:none;border-radius:8px;font-weight:600;" onclick="document.scrollingElement.scrollTop=0;">
+          ↑ Haut de la page
+        </a>
+      </div>
+    <% } %>
+  </div>
 </div>
 
-<div class="card">
-  <h3>Importer des contacts (CSV)</h3>
-  <form method="POST" action="/contacts/import" enctype="multipart/form-data">
-    <input type="file" name="file" accept=".csv" required />
-    <p style="font-size:0.9em;color:var(--secondary-color)">Colonnes supportées: email, firstName, lastName, tags</p>
-    <button class="button" type="submit">Importer</button>
-  </form>
-</div>
+<script>
+function filterContacts() {
+  const query = document.getElementById('contactSearch').value.toLowerCase();
+  document.querySelectorAll('.contact-card').forEach(card => {
+    const searchText = card.dataset.search;
+    if (query === '' || searchText.includes(query)) {
+      card.style.display = '';
+    } else {
+      card.style.display = 'none';
+    }
+  });
+}
+</script>
+
+<style>
+  .contact-card:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+  }
+
+  @media (max-width: 860px) {
+    #contactsContainer {
+      grid-template-columns: 1fr !important;
+    }
+
+    #contactSearch {
+      width: 100% !important;
+      margin-bottom: 15px;
+    }
+
+    .card {
+      padding: 16px !important;
+    }
+
+    .button {
+      padding: 10px 12px !important;
+      font-size: 0.85rem !important;
+    }
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .contact-card {
+    animation: slideIn 0.3s ease;
+  }
+</style>
