@@ -247,7 +247,7 @@ app.post('/compose/send', requireAuth, upload.fields([
                 // Wrapper avec timeout pour éviter les blocages
                 const sendPromise = sendEmail({ to, subject: finalSubject, html: finalHtml, attachments });
                 const timeoutPromise = new Promise((_, rej) => 
-                    setTimeout(() => rej(new Error('Timeout envoi')), 10000)
+                    setTimeout(() => rej(new Error('Timeout envoi')), 30000)
                 );
                 const info = await Promise.race([sendPromise, timeoutPromise]);
                 

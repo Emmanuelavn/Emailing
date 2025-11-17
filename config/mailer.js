@@ -9,10 +9,21 @@ const transporter = nodemailer.createTransport({
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS
     },
+    // Augmente les timeouts pour éviter les erreurs de connexion en environnements lents
+    connectionTimeout: Number(process.env.SMTP_CONNECTION_TIMEOUT_MS || 30000),
+    greetingTimeout: Number(process.env.SMTP_GREETING_TIMEOUT_MS || 30000),
+    socketTimeout: Number(process.env.SMTP_SOCKET_TIMEOUT_MS || 30000),
     tls: {
         // Permet d'éviter certaines erreurs de certificat en environnement de test
         rejectUnauthorized: false
     }
+});
+
+// Vérifie la connexion SMTP au démarrage (utile pour diagnostiquer les erreurs de production)
+transporter.verify().then(() => {
+    console.log('Transporteur SMTP prêt — connexion OK');
+}).catch(err => {
+    console.warn('Impossible de vérifier le transporteur SMTP au démarrage:', err && err.message ? err.message : err);
 });
 
 /**
