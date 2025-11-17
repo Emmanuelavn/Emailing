@@ -31,12 +31,16 @@
         <a href="/compose" class="button" style="display:flex;align-items:center;gap:6px;padding:10px 16px;">
             <i class="fas fa-envelope"></i> Nouveau message
         </a>
-        <button onclick="if(confirm('Supprimer TOUS les historiques ? Cette action est irréversible.')) window.location.href='/history/delete-all'" class="button secondary" style="display:flex;align-items:center;gap:6px;padding:10px 16px;margin-left:auto;">
-            <i class="fas fa-trash"></i> Tout supprimer
-        </button>
-        <button onclick="if(confirm('Réinitialiser le dashboard ? Cela supprimera tous les logs.')) window.location.href='/history/reset-dashboard'" class="button secondary" style="display:flex;align-items:center;gap:6px;padding:10px 16px;">
-            <i class="fas fa-redo"></i> Réinitialiser
-        </button>
+        <form method="POST" action="/history/delete-all" onsubmit="return confirm('Supprimer TOUS les historiques ? Cette action est irréversible.')" style="display:inline-block;margin-left:auto;">
+            <button type="submit" class="button secondary" style="display:flex;align-items:center;gap:6px;padding:10px 16px;">
+                <i class="fas fa-trash"></i> Tout supprimer
+            </button>
+        </form>
+        <form method="POST" action="/history/reset-dashboard" onsubmit="return confirm('Réinitialiser le dashboard ? Cela supprimera tous les logs.')" style="display:inline-block;">
+            <button type="submit" class="button secondary" style="display:flex;align-items:center;gap:6px;padding:10px 16px;">
+                <i class="fas fa-redo"></i> Réinitialiser
+            </button>
+        </form>
     </div>
 
     <!-- Contenu principal -->
