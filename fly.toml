@@ -1,9 +1,9 @@
-# fly.toml app configuration file generated for plateforme-emailing-crimson-glade-1514 on 2025-11-23T16:34:20+01:00
+# fly.toml app configuration file generated for app-mail on 2025-11-23T15:56:57Z
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'plateforme-emailing-crimson-glade-1514'
+app = 'app-mail'
 primary_region = 'cdg'
 
 [build]
@@ -20,3 +20,4 @@ primary_region = 'cdg'
   memory = '1gb'
   cpu_kind = 'shared'
   cpus = 1
+  memory_mb = 1024
