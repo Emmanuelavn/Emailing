@@ -2,7 +2,13 @@ require('dotenv').config(); // Charge les variables d'environnement depuis .env
 
 const express = require('express');
 const app = express();
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 3000;
+// IMPORTANT : écouter sur 0.0.0.0
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`🚀 Serveur lancé sur le port ${PORT}`);
+});
+
+
 
 const connectDB = require('./config/db'); // Importe la fonction de connexion à la BDD
 const User = require('./models/User');
@@ -434,10 +440,6 @@ app.get('/logout', (req, res) => {
     }
 });
 
-app.listen(PORT, () => {
-    console.log(`Serveur démarré sur http://localhost:${PORT}`);
-    console.log(`Accédez au tableau de bord via http://localhost:${PORT}`);
-});
 
 app.post('/contacts/:id/delete', requireAuth, async (req, res) => {
     try {
@@ -606,3 +608,4 @@ app.get('/campaigns/:id', requireAuth, async (req, res) => {
         res.status(400).send('Erreur: ' + err.message);
     }
 });
+

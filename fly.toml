@@ -1,9 +1,9 @@
-# fly.toml app configuration file generated for plateforme-emailing-bitter-surf-1070 on 2025-11-23T13:53:54+01:00
+# fly.toml app configuration file generated for plateforme-emailing-crimson-glade-1514 on 2025-11-23T16:34:20+01:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'plateforme-emailing-bitter-surf-1070'
+app = 'plateforme-emailing-crimson-glade-1514'
 primary_region = 'cdg'
 
 [build]
