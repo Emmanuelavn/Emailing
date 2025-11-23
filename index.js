@@ -2,7 +2,8 @@ require('dotenv').config(); // Charge les variables d'environnement depuis .env
 
 const express = require('express');
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
+
 const connectDB = require('./config/db'); // Importe la fonction de connexion à la BDD
 const User = require('./models/User');
 const ejsMate = require('ejs-mate'); // Importe ejs-mate // Importe le modèle User
